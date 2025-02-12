@@ -44,6 +44,21 @@
             <artifactId>kotlin-stdlib</artifactId>
         </dependency>
 
+            <!-- Kotlin Coroutines Core -->
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-coroutines-core</artifactId>
+                <version>1.7.1</version>
+            </dependency>
+
+            <!-- Kotlin Coroutines for JDK 8 (Needed for `runBlocking`) -->
+            <dependency>
+                <groupId>org.jetbrains.kotlinx</groupId>
+                <artifactId>kotlinx-coroutines-jdk8</artifactId>
+                <version>1.7.1</version>
+            </dependency>
+
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>

@@ -13,29 +13,32 @@ object CsvUtils {
      * Extracts transaction records from the CSV file.
      */
     fun extractTransactions(lines: List<String>): List<String> {
-        val startIndex = lines.indexOfFirst { it.trim().isEmpty() } + 1
-        return if (startIndex > 0 && startIndex < lines.size) lines.drop(startIndex) else emptyList()
+        val startIndex = lines.indexOfFirst { it.contains("RECORD", ignoreCase = true) } + 1
+        return if (startIndex > 0 && startIndex < lines.size) {
+            lines.drop(startIndex)
+        } else {
+            emptyList()
+        }
     }
 
     /**
-     * Parses transaction records and filters valid categories.
+     * Parses transaction records into a structured format.
      */
-    fun parseTransactions(transactions: List<String>): Map<String, Double> {
-        val validCategories = setOf("GROCERY NTX", "GROCERIES TX", "ALCOHOL", "CIGARETTES")
-        val dataMap = mutableMapOf<String, Double>()
+    fun parseTransactions(transactions: List<String>): MutableMap<String, Any> {
+        val dataMap = mutableMapOf<String, Any>()
 
         for (line in transactions) {
             val fields = line.split(",").map { it.replace("\"", "").trim().uppercase() }
-
-            if (fields.size < 4) continue  // Skip malformed lines
+            if (fields.size < 4) continue // Skip malformed lines
 
             val descriptor = fields[1]
-            val amount = fields[3].toDoubleOrNull() ?: 0.0 // Convert to Double
+            val amount = fields[3].toDoubleOrNull() ?: 0.0
 
-            for (category in validCategories) {
-                if (descriptor.contains(category, ignoreCase = true)) {
-                    dataMap[category] = dataMap.getOrDefault(category, 0.0) + amount
-                }
+            when (descriptor) {
+                "GROCERY NTX" -> dataMap["GROCERIES NTX"] = (dataMap["GROCERIES NTX"] as? Double ?: 0.0) + amount
+                "GROCERIES TX" -> dataMap["GROCERIES TX"] = (dataMap["GROCERIES TX"] as? Double ?: 0.0) + amount
+                "CIGARETTES" -> dataMap["CIGARETTES"] = (dataMap["CIGARETTES"] as? Double ?: 0.0) + amount
+                "ALCOHOL" -> dataMap["ALCOHOL"] = (dataMap["ALCOHOL"] as? Double ?: 0.0) + amount
             }
         }
 
