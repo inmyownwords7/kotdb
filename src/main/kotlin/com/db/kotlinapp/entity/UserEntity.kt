@@ -6,15 +6,19 @@ import jakarta.persistence.*
 @Table(name = "account_users")
 class UserEntity(
     @Column(nullable = false, unique = true)
-    var username: String,
+    private var username: String,
 
     @Column(nullable = false)
-    var password: String,
+    private var password: String,
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_roles", joinColumns = [JoinColumn(name = "user_id")])
     @Column(name = "role")
-    var roles: Set<String> = setOf("USER") // Default role)
+    private var roles: Set<String> = setOf("USER") // Default role)
+
+    @Column(nullable = false)
+    var isDeleted: Boolean = false
+
 ) {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0;
