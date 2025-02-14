@@ -37,7 +37,18 @@ class SecurityConfig(private val userDetailsService: UserDetailsService) {
                     .requestMatchers("/auth/login", "/auth/register").permitAll()
                     .anyRequest().authenticated()
             }
-            .formLogin { it.loginPage("/auth/login").permitAll() }
+            .formLogin { form ->
+                form
+                    .loginPage("/auth/login") // Custom login page (must be handled in a controller)
+                    .defaultSuccessUrl("/dashboard", true) // Redirect after successful login
+                    .permitAll()
+            }
+            .logout { logout ->
+                logout
+                    .logoutUrl("/auth/logout")
+                    .logoutSuccessUrl("/auth/login?logout") // Redirect after logout
+                    .permitAll()
+            }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }
         return http.build()
     }

@@ -7,6 +7,6 @@ import java.util.Optional
 
 @Repository
 interface UserRepository : JpaRepository<UserEntity, Long> {
-    fun findByUsername(username: String): Optional<UserEntity> // ✅ Find user by username
+    fun findByUsername(username: String): UserEntity? // ✅ Find user by username
     fun findByIsDeletedFalse(): List<UserEntity> // ✅ Get only active users
 }
