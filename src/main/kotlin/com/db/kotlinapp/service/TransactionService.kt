@@ -1,76 +1,39 @@
 package com.db.kotlinapp.service
 
 import com.db.kotlinapp.dto.TransactionDTO
-import com.db.kotlinapp.entity.TransactionEntity
+import com.db.kotlinapp.mapper.TransactionMapper
 import com.db.kotlinapp.repository.TransactionRepository
 import com.db.kotlinapp.repository.UserRepository
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.springframework.stereotype.Service
-import java.time.LocalDate
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class TransactionService(
     private val transactionRepository: TransactionRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val transactionMapper: TransactionMapper
 ) {
-    fun saveTransaction(transactionDTO: TransactionDTO): TransactionDTO {
-        val user = userRepository.findById(transactionDTO.userId)
-            .orElseThrow { IllegalArgumentException("User not found with ID: ${transactionDTO.userId}") }
 
-        // ✅ Convert DTO → Entity before saving
-        val transaction = TransactionEntity(
-            date = transactionDTO.date,
-            groceriesTx = transactionDTO.groceriesTx,
-            groceriesNtx = transactionDTO.groceriesNtx,
-            cigarettes = transactionDTO.cigarettes,
-            alcohol = transactionDTO.alcohol,
-            user = user
-        )
+    @Transactional
+    suspend fun saveTransactions(dtoList: List<TransactionDTO>) = withContext(Dispatchers.IO) { // ✅ Moves to IO thread
+        val entities = dtoList.mapNotNull { dto ->
+            val user = userRepository.findById(dto.userId)
+                .orElse(null) // ✅ Avoids crash if user not found
 
-        val savedTransaction = transactionRepository.save(transaction) // ✅ Now it's a TransactionEntity
-
-        // ✅ Convert Entity → DTO before returning the response
-        return TransactionDTO(
-            date = savedTransaction.date,
-            groceriesTx = savedTransaction.groceriesTx,
-            groceriesNtx = savedTransaction.groceriesNtx,
-            cigarettes = savedTransaction.cigarettes,
-            alcohol = savedTransaction.alcohol,
-            userId = savedTransaction.user.id!!
-        )
-    }
-    fun getTransactionsByUserId(userId: Long, pageable: Pageable): Page<TransactionDTO> {
-        val user = userRepository.findById(userId)
-            .orElseThrow { IllegalArgumentException("User not found with ID: $userId") }
-
-        val transactionsPage: Page<TransactionEntity> = transactionRepository.findByUser(user, pageable)
-
-        // ✅ Automatically maps `Page<TransactionEntity>` → `Page<TransactionDTO>`
-        return transactionsPage.map { transaction ->
-            TransactionDTO(
-                date = transaction.date,
-                groceriesTx = transaction.groceriesTx,
-                groceriesNtx = transaction.groceriesNtx,
-                cigarettes = transaction.cigarettes,
-                alcohol = transaction.alcohol,
-                userId = transaction.user.id!!
-            )
+            if (user == null) {
+                println("⚠️ Skipping transaction: User ID ${dto.userId} not found!")
+                null // ✅ Skips invalid transactions
+            } else {
+                transactionMapper.toEntity(dto, user) // ✅ Correctly maps `userId` → `UserEntity`
+            }
         }
-    }
-    fun getTransactionsByDateRange(startDate: LocalDate, endDate: LocalDate, pageable: Pageable): Page<TransactionDTO> {
-        val transactionsPage: Page<TransactionEntity> =
-            transactionRepository.findByDateBetween(startDate, endDate, pageable)
 
-        return transactionsPage.map { transaction ->
-            TransactionDTO(
-                date = transaction.date,
-                groceriesTx = transaction.groceriesTx,
-                groceriesNtx = transaction.groceriesNtx,
-                cigarettes = transaction.cigarettes,
-                alcohol = transaction.alcohol,
-                userId = transaction.user.id!!
-            )
-        }
+        transactionRepository.saveAll(entities) // ✅ Saves only valid transactions
+    }
+
+    suspend fun getAllTransactions(): List<TransactionDTO> = withContext(Dispatchers.IO) {
+        transactionRepository.findAll().map { transactionMapper.toDto(it) }
     }
 }

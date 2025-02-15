@@ -1,41 +1,46 @@
 package com.db.kotlinapp.entity
 
-import com.db.kotlinapp.enums.Role
 import jakarta.persistence.*
+import com.db.kotlinapp.enums.Role
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 
 @Entity
-@Table(name = "account_users")
+@Table(name = "users")
 class UserEntity(
-    @Column(nullable = false, unique = true)
-    var username: String,
+    @Column(unique = true, nullable = false)
+    private var username: String,
 
     @Column(nullable = false)
-    var password: String,
+    private var password: String,
 
-    @Enumerated(EnumType.STRING) // ✅ Ensures role is stored as a String
-    var role: Role, // ✅ A user has only one role
-
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private var role: Role = Role.USER
 ) : UserDetails {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null
+    val id: Long = 0
 
-    @Column(nullable = false)
-    var isDeleted: Boolean = false
+    constructor() : this("", "", Role.USER) // ✅ No-arg constructor for Hibernate
 
     override fun getAuthorities(): Collection<GrantedAuthority> {
-        return role.getAuthorities() // ✅ Convert Role to Authorities
+        return listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
     }
 
     override fun getPassword(): String = password
     override fun getUsername(): String = username
+
     override fun isAccountNonExpired(): Boolean = true
     override fun isAccountNonLocked(): Boolean = true
     override fun isCredentialsNonExpired(): Boolean = true
     override fun isEnabled(): Boolean = true
 
-    // ✅ Corrected default constructor (Avoids error)
-    constructor() : this("", "", Role.USER)
+    fun getRole(): Role = role
+
+    fun setRole(newRole: Role) { // ✅ Allows role changes
+        this.role = newRole
+    }
 }

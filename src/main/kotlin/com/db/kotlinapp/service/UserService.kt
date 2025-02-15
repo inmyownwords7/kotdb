@@ -1,22 +1,32 @@
 package com.db.kotlinapp.service
 
-import com.db.kotlinapp.entity.UserEntity
+import com.db.kotlinapp.dto.UserDTO
 import com.db.kotlinapp.enums.Role
+import com.db.kotlinapp.mapper.UserMapper
 import com.db.kotlinapp.repository.UserRepository
-import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class UserService(
     private val userRepository: UserRepository,
-    private val passwordEncoder: PasswordEncoder
+    private val userMapper: UserMapper
 ) {
 
-    fun createUser(username: String, password: String): UserEntity {
-        val hashedPassword = passwordEncoder.encode(password)
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')") // ✅ Only admins can change roles
+    fun changeUserRole(username: String, newRole: Role): UserDTO {
+        val user = userRepository.findByUsername(username)
+            ?: throw IllegalArgumentException("❌ User not found!")
 
-        val user = UserEntity(username = username, password = hashedPassword, roles = setOf(Role.USER.name)
-        )
-        return userRepository.save(user)
+        if (user.getRole() == newRole) {
+            throw IllegalArgumentException("❌ User is already assigned role: $newRole")
+        }
+
+        user.setRole(newRole) // ✅ Update the role
+        val updatedUser = userRepository.save(user)
+
+        return userMapper.toDto(updatedUser) // ✅ Return updated user as DTO
     }
 }

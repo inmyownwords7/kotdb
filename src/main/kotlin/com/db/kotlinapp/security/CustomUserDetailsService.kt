@@ -15,12 +15,12 @@ class CustomUserDetailsService(private val userRepository: UserRepository) : Use
         val user: UserEntity = userRepository.findByUsername(username)
             ?: throw UsernameNotFoundException("User not found: $username")
 
-        val authorities = listOf(SimpleGrantedAuthority("ROLE_${user.role.name}")) // ✅ Fix: Use `user.role`
+        val authority = SimpleGrantedAuthority("ROLE_${user.getRole().name}") // ✅ Single role
 
         return User.builder()
             .username(user.username)
-            .password(user.password) // ✅ Password should already be encoded
-            .authorities(authorities) // ✅ Convert Role to Spring Security format
+            .password(user.password) // ✅ Password is already encoded
+            .authorities(authority) // ✅ Uses only one role
             .build()
     }
 }

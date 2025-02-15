@@ -34,19 +34,17 @@ class SecurityConfig(private val userDetailsService: UserDetailsService) {
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/auth/login", "/auth/register").permitAll()
+                    .requestMatchers("/auth/**").permitAll() // ✅ Allow login & registration
+                    .requestMatchers("/admin/**").hasRole("ADMIN") // ✅ Restrict admin routes
                     .anyRequest().authenticated()
             }
             .formLogin { form ->
-                form
-                    .loginPage("/auth/login") // Custom login page (must be handled in a controller)
-                    .defaultSuccessUrl("/dashboard", true) // Redirect after successful login
-                    .permitAll()
+                form.defaultSuccessUrl("/dashboard", true) // ✅ Redirect after login
             }
             .logout { logout ->
                 logout
                     .logoutUrl("/auth/logout")
-                    .logoutSuccessUrl("/auth/login?logout") // Redirect after logout
+                    .logoutSuccessUrl("/auth/login?logout")
                     .permitAll()
             }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) }

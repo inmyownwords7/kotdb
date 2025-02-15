@@ -1,9 +1,12 @@
 package com.db.kotlinapp.dto
+
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
 data class TransactionDTO(
+
+    val id: Long? = null,
 
     @field:NotNull(message = "Date cannot be null")
     val date: LocalDate,
