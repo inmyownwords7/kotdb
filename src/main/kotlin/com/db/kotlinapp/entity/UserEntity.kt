@@ -9,9 +9,10 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 @Entity
 @Table(name = "users")
 class UserEntity(
+    //This must be unique because you can't have the user but perhaps we should use it that username && userId
     @Column(unique = true, nullable = false)
     private var username: String,
-
+//becomes encrypted
     @Column(nullable = false)
     private var password: String,
 

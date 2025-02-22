@@ -26,7 +26,13 @@ class UserService(
 
         user.setRole(newRole) // ✅ Update the role
         val updatedUser = userRepository.save(user)
-
+// why are we returning a dto here?
         return userMapper.toDto(updatedUser) // ✅ Return updated user as DTO
     }
+//
+//    fun registerUser(userDTO: UserDTO): UserDTO {
+//        val userEntity = userMapper.toEntity(userDTO)
+//        val savedUser = userRepository.save(userEntity)
+//        return userMapper.toDto(savedUser) // ✅ Return saved user as DTO
+//    }
 }

@@ -1,5 +1,6 @@
 package com.db.kotlinapp.mapper
 
+import com.db.kotlinapp.dto.CvDTO
 import com.db.kotlinapp.dto.TransactionDTO
 import org.mapstruct.*
 import java.time.LocalDate
@@ -12,16 +13,11 @@ interface CsvTransactionMapper {
     @Mapping(source = "GROCERIES_NTX", target = "groceriesNtx", qualifiedByName = ["mapDouble"])
     @Mapping(source = "CIGARETTES", target = "cigarettes", qualifiedByName = ["mapDouble"])
     @Mapping(source = "ALCOHOL", target = "alcohol", qualifiedByName = ["mapDouble"])
-    @Mapping(source = "userId", target = "userId", qualifiedByName = ["mapLong"])
-    fun mapCsvToDto(data: Map<String, Any>): TransactionDTO?
+    fun mapCsvToDto(data: Map<String, Any>): CvDTO
 
     @Named("mapDate")
     fun mapDate(date: Any?): LocalDate = LocalDate.parse(date.toString())
 
     @Named("mapDouble")
     fun mapDouble(value: Any?): Double = value?.toString()?.toDoubleOrNull() ?: 0.0
-
-    @Named("mapLong")
-    fun mapLong(value: Any?): Long = value?.toString()?.toLongOrNull()
-        ?: throw IllegalArgumentException("User ID missing")
 }

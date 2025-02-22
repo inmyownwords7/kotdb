@@ -1,5 +1,6 @@
 package com.db.kotlinapp.service
 
+import com.db.kotlinapp.dto.CvDTO
 import com.db.kotlinapp.dto.TransactionDTO
 import com.db.kotlinapp.mapper.TransactionMapper
 import com.db.kotlinapp.repository.TransactionRepository
@@ -17,22 +18,20 @@ class TransactionService(
 ) {
 
     @Transactional
-    suspend fun saveTransactions(dtoList: List<TransactionDTO>) = withContext(Dispatchers.IO) { // ✅ Moves to IO thread
-        val entities = dtoList.mapNotNull { dto ->
-            val user = userRepository.findById(dto.userId)
-                .orElse(null) // ✅ Avoids crash if user not found
+    suspend fun saveTransactions(csvDtoList: List<CvDTO>) = withContext(Dispatchers.IO) {
+        val user = userRepository.findByUsername("defaultUser") // ✅ Look up user
 
-            if (user == null) {
-                println("⚠️ Skipping transaction: User ID ${dto.userId} not found!")
-                null // ✅ Skips invalid transactions
-            } else {
-                transactionMapper.toEntity(dto, user) // ✅ Correctly maps `userId` → `UserEntity`
-            }
+        val transactionDtoList = csvDtoList.map { csvDto ->
+            transactionMapper.toTransactionDTO(csvDto, user) // ✅ Assign userId
         }
 
-        transactionRepository.saveAll(entities) // ✅ Saves only valid transactions
-    }
+        val transactionEntities = transactionDtoList.map { dto ->
+            transactionMapper.toEntity(dto, user) // ✅ Convert to TransactionEntity
+        }
 
+        transactionRepository.saveAll(transactionEntities) // ✅ Save transactions
+    }
+}
     suspend fun getAllTransactions(): List<TransactionDTO> = withContext(Dispatchers.IO) {
         transactionRepository.findAll().map { transactionMapper.toDto(it) }
     }

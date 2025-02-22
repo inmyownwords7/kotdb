@@ -1,5 +1,6 @@
 package com.db.kotlinapp.service
 
+import com.db.kotlinapp.dto.CvDTO
 import com.db.kotlinapp.dto.TransactionDTO
 import com.db.kotlinapp.mapper.CsvTransactionMapper
 import com.db.kotlinapp.utils.CsvUtils.extractDate
@@ -14,7 +15,7 @@ class CsvService(
     private val csvTransactionMapper: CsvTransactionMapper // ✅ Inject the correct Mapper
 ) {
 
-    suspend fun processCSVFiles(directory: String): List<TransactionDTO> = coroutineScope {
+    suspend fun processCSVFiles(directory: String): List<CvDTO> = coroutineScope {
         val csvFolder = File(directory)
         if (!csvFolder.exists() || !csvFolder.isDirectory) return@coroutineScope emptyList()
 
