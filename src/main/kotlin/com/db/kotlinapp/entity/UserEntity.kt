@@ -5,6 +5,7 @@ import com.db.kotlinapp.enums.Role
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.crypto.password.PasswordEncoder
 
 @Entity
 @Table(name = "users")
@@ -43,5 +44,12 @@ class UserEntity(
 
     fun setRole(newRole: Role) { // ✅ Allows role changes
         this.role = newRole
+    }
+    fun setUsername(newUsername: String) { // ✅ Allows username change
+        this.username = newUsername
+    }
+
+    fun setPassword(newPassword: String) { // ✅ Ensures password is always hashed
+        this.password = newPassword
     }
 }

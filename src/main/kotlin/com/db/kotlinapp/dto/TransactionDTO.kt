@@ -24,5 +24,5 @@ data class TransactionDTO(
     val alcohol: Double = 0.0,
 
     @field:NotNull(message = "User ID is required")
-    val userId: Long
+    val userId: Long?
 )

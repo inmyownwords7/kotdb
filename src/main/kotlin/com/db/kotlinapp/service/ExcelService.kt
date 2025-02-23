@@ -30,11 +30,17 @@ class ExcelService {
                 row.createCell(2).setCellValue(transaction.groceriesNtx)
                 row.createCell(3).setCellValue(transaction.cigarettes)
                 row.createCell(4).setCellValue(transaction.alcohol)
-                row.createCell(5).setCellValue(transaction.userId.toDouble()) // ✅ Uses userId instead of full UserEntity
+                row.createCell(5)
+                    .setCellValue(transaction.userId?.toString() ?: "N/A") // ✅ Uses userId instead of full UserEntity
             }
+            // ✅ Auto-size columns for better formatting
+            headers.indices.forEach { sheet.autoSizeColumn(it) }
+            // ✅ Ensure directory exists before writing
+            val file = File(filePath)
+            file.parentFile?.mkdirs()
 
-            // ✅ Save the file
-            FileOutputStream(File(filePath)).use { workbook.write(it) }
+            // ✅ Save the file safely
+            FileOutputStream(file).use { workbook.write(it) }
             workbook.close()
 
             println("✅ Transactions exported to Excel: $filePath")
@@ -42,6 +48,9 @@ class ExcelService {
         } catch (e: Exception) {
             println("❌ Excel export failed: ${e.message}")
             false // ✅ Return failure
+        } catch (e: RuntimeException) {
+            println("❌ Excel export failed due to runtime error: ${e.message}")
+            false
         }
     }
 }

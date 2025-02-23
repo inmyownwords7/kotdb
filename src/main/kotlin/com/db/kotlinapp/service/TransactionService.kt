@@ -1,6 +1,5 @@
 package com.db.kotlinapp.service
 
-import com.db.kotlinapp.dto.CvDTO
 import com.db.kotlinapp.dto.TransactionDTO
 import com.db.kotlinapp.mapper.TransactionMapper
 import com.db.kotlinapp.repository.TransactionRepository
@@ -14,25 +13,51 @@ import org.springframework.transaction.annotation.Transactional
 class TransactionService(
     private val transactionRepository: TransactionRepository,
     private val userRepository: UserRepository,
-    private val transactionMapper: TransactionMapper
+    private val transactionMapper: TransactionMapper,
+    private val csvService: CsvService
 ) {
-
     @Transactional
-    suspend fun saveTransactions(csvDtoList: List<CvDTO>) = withContext(Dispatchers.IO) {
-        val user = userRepository.findByUsername("defaultUser") // ✅ Look up user
+    suspend fun saveTransactionsFromCSV(directory: String, username: String) {
+        val user = userRepository.findByUsername(username)
+            ?: throw IllegalArgumentException("❌ User '$username' not found!")
 
-        val transactionDtoList = csvDtoList.map { csvDto ->
-            transactionMapper.toTransactionDTO(csvDto, user) // ✅ Assign userId
+        val csvDtoList = csvService.processCSVFiles(directory) // ✅ Fetch parsed CSV data
+
+        if (csvDtoList.isEmpty()) {
+            println("⚠️ No transactions found in CSV. Nothing to save.")
+            return
         }
 
-        val transactionEntities = transactionDtoList.map { dto ->
-            transactionMapper.toEntity(dto, user) // ✅ Convert to TransactionEntity
+        val transactionEntities = csvDtoList.map { csvDto ->
+            val transactionDto = transactionMapper.toTransactionDTO(csvDto, user.id!!)
+            transactionMapper.toEntity(transactionDto, user)
         }
 
-        transactionRepository.saveAll(transactionEntities) // ✅ Save transactions
+        transactionRepository.saveAll(transactionEntities) // ✅ Save to DB
     }
-}
-    suspend fun getAllTransactions(): List<TransactionDTO> = withContext(Dispatchers.IO) {
-        transactionRepository.findAll().map { transactionMapper.toDto(it) }
+
+    // ✅ Save a list of transactions
+    @Transactional
+    suspend fun saveTransactions(transactions: List<TransactionDTO>) = withContext(Dispatchers.IO) {
+        if (transactions.isEmpty()) {
+            println("⚠️ No transactions to save.")
+            return@withContext
+        }
+
+        val transactionEntities = transactions.map { dto ->
+            val user = userRepository.findById(dto.userId!!)
+                .orElseThrow { IllegalArgumentException("❌ User ID ${dto.userId} not found!") }
+
+            transactionMapper.toEntity(dto, user)
+        }
+        transactionRepository.saveAll(transactionEntities) // ✅ Save all transactions
+        println("✅ ${transactionEntities.size} transactions saved to database.")
+    }
+
+    // ✅ Retrieve all transactions from the database
+    @Transactional(readOnly = true)
+    fun getAllTransactions(): List<TransactionDTO> {
+        val transactionEntities = transactionRepository.findAll() // ✅ Fetch from DB
+        return transactionEntities.map { transactionMapper.toDto(it) } // ✅ Convert Entity to DTO
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface UserRepository : JpaRepository<UserEntity, Long> {
+    // This is used a check to see if it's null or not
     fun existsByUsername(username: String): Boolean
     fun findByUsername(username: String): UserEntity? // ✅ Returns UserEntity, used for authentication
-    fun saveByEntity(dto: UserDTO): UserDTO?
 }
